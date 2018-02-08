@@ -152,6 +152,13 @@ new_local_repository(
     path = "/usr/local/apollo/local_integ",
 )
 
+# snowboy
+new_local_repository(
+    name = "snowboy",
+    build_file = "third_party/snowboy.BUILD",
+    path = "/usr/local/apollo/snowboy",
+)
+
 # Proj.4
 new_http_archive(
     name = "proj4",

@@ -9,6 +9,7 @@ export default class Options {
     @observable showPNCMonitor = PARAMETERS.options.defaults.showPNCMonitor;
     @observable showRouteEditingBar = PARAMETERS.options.defaults.showRouteEditingBar;
     @observable showPOI = PARAMETERS.options.defaults.showPOI;
+    @observable enableVoiceCommand = PARAMETERS.options.defaults.enableVoiceCommand;
     @observable showDataRecorder = PARAMETERS.options.defaults.showDataRecorder;
     @observable showVideo = PARAMETERS.options.defaults.showVideo;
     @observable showTasks =

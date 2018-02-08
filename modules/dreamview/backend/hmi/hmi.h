@@ -18,10 +18,15 @@
 #define MODULES_DREAMVIEW_BACKEND_HMI_HMI_H_
 
 #include <string>
+#include <unordered_map>
 
+#include "boost/thread/locks.hpp"
+#include "boost/thread/shared_mutex.hpp"
 #include "gtest/gtest_prod.h"
+
 #include "modules/common/monitor_log/monitor_log_buffer.h"
 #include "modules/dreamview/backend/handlers/websocket.h"
+#include "modules/dreamview/backend/hmi/voice_detector.h"
 #include "modules/dreamview/backend/map/map_service.h"
 #include "modules/dreamview/proto/hmi_config.pb.h"
 #include "modules/dreamview/proto/hmi_status.pb.h"
@@ -71,6 +76,10 @@ class HMI {
   MapService *map_service_;
 
   apollo::common::monitor::MonitorLogger logger_;
+
+  std::unordered_map<const WebSocketHandler::Connection*,
+                     std::unique_ptr<VoiceDetector>> voice_detectors_;
+  mutable boost::shared_mutex voice_detectors_mutex_;
 
   FRIEND_TEST(HMITest, RunComponentCommand);
 };

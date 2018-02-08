@@ -59,10 +59,12 @@ namespace {
 using apollo::canbus::Chassis;
 using apollo::common::adapter::AdapterManager;
 using apollo::common::time::Clock;
+using apollo::common::util::FindLinkedPtrOrNull;
 using apollo::common::util::FindOrNull;
 using apollo::common::util::GetProtoFromASCIIFile;
 using apollo::common::util::JsonUtil;
 using apollo::common::util::StringTokenizer;
+using apollo::common::util::make_unique;
 using apollo::control::DrivingAction;
 using apollo::data::VehicleInfo;
 using google::protobuf::Map;
@@ -139,9 +141,9 @@ bool GuaranteeDrivingMode(const Chassis::DrivingMode target_mode,
 }  // namespace
 
 HMI::HMI(WebSocketHandler *websocket, MapService *map_service)
-    : websocket_(websocket),
-      map_service_(map_service),
-      logger_(apollo::common::monitor::MonitorMessageItem::HMI) {
+    : websocket_(websocket)
+    , map_service_(map_service)
+    , logger_(apollo::common::monitor::MonitorMessageItem::HMI) {
   CHECK(common::util::GetProtoFromFile(FLAGS_hmi_config_filename, &config_))
       << "Unable to parse HMI config file " << FLAGS_hmi_config_filename;
   config_.set_docker_image(apollo::data::InfoCollector::GetDockerImage());
@@ -184,6 +186,37 @@ void HMI::RegisterMessageHandlers() {
             conn, JsonUtil::ProtoToTypedJson("HMIConfig", config_).dump());
         websocket_->SendData(
             conn, JsonUtil::ProtoToTypedJson("HMIStatus", status_).dump());
+
+        {
+          boost::unique_lock<boost::shared_mutex> wlock(voice_detectors_mutex_);
+          voice_detectors_.emplace(
+              conn, make_unique<VoiceDetector>(config_.voice_command()));
+        }
+      });
+
+  websocket_->RegisterConnectionCloseHandler(
+      [this](const WebSocketHandler::Connection *conn) {
+        boost::unique_lock<boost::shared_mutex> wlock(voice_detectors_mutex_);
+        voice_detectors_.erase(conn);
+      });
+
+  // HMI client sends voice data.
+  websocket_->RegisterMessageHandler(
+      "VoicePiece",
+      [this](const Json &json, WebSocketHandler::Connection *conn) {
+        // json should contain {data: "<voice piece>"}.
+        std::string data;
+        if (JsonUtil::GetBytesFromJson(json, "data", &data)) {
+          boost::shared_lock<boost::shared_mutex> rlock(voice_detectors_mutex_);
+          auto *voice_detector = FindLinkedPtrOrNull(voice_detectors_, conn);
+          if (voice_detector) {
+            voice_detector->Detect(data);
+          } else {
+            AERROR << "Cannot find voice_detector for connection " << conn;
+          }
+        } else {
+          AERROR << "Truncated voice piece.";
+        }
       });
 
   // HMI client asks for executing module command.
@@ -302,7 +335,6 @@ void HMI::RegisterMessageHandlers() {
           AERROR << "Truncated SubmitDriveEvent request.";
         }
       });
-
 
   // Received new system status, broadcast to clients.
   AdapterManager::AddSystemStatusCallback(

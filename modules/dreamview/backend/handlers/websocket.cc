@@ -44,6 +44,11 @@ void WebSocketHandler::handleReadyState(CivetServer *server, Connection *conn) {
 
 void WebSocketHandler::handleClose(CivetServer *server,
                                    const Connection *conn) {
+  // Trigger registered closing connection handlers.
+  for (const auto handler : connection_close_handlers_) {
+    handler(conn);
+  }
+
   {
     std::unique_lock<std::mutex> lock(mutex_);
 

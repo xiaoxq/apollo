@@ -226,6 +226,16 @@ export default class RosWebSocketEndpoint {
         }));
     }
 
+    // The json string is ~3.5x the size the Uint8Array. Currently it is fine.
+    // If data size becomes problem in the future, we can send the array as
+    // Base64 string, which is ~1.3x the size.
+    sendVoicePiece(uint8array) {
+        this.websocket.send(JSON.stringify({
+            type: "VoicePiece",
+            data: Array.prototype.slice.call(uint8array),
+        }));
+    }
+
     toggleSimControl(enable) {
         this.websocket.send(JSON.stringify({
             type: "ToggleSimControl",

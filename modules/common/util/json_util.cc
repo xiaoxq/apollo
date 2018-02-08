@@ -62,6 +62,35 @@ bool JsonUtil::GetStringFromJson(const Json &json, const std::string &key,
   return true;
 }
 
+bool JsonUtil::GetBytesFromJson(const Json &json, const std::string &key,
+                                std::string *value) {
+    const auto iter = json.find(key);
+    if (iter == json.end()) {
+      AERROR << "The json has no such key: " << key;
+      return false;
+    }
+    if (!iter->is_array()) {
+      AERROR << "The value of json[" << key << "] is not an array";
+      return false;
+    }
+
+    bool ret = true;
+    value->clear();
+    value->reserve(iter->size());
+    for (const auto &elem : *iter) {
+      if (!elem.is_number()) {
+        // Note that we still try to get all values though there are invalid
+        // elements.
+        AWARN << "The value of json[" << key << "] contains non-number element";
+        ret = false;
+      } else {
+        value->push_back(static_cast<uint8_t>(elem));
+      }
+    }
+    return ret;
+  }
+
+
 bool JsonUtil::GetStringVectorFromJson(const Json &json, const std::string &key,
                                        std::vector<std::string> *value) {
   const auto iter = json.find(key);

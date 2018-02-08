@@ -45,6 +45,7 @@ options:
     showModuleController: false
     showMenu: false
     showPOI: false
+    enableVoiceCommand: false
     showPNCMonitor: false
     showRouteEditingBar: false
     showDataRecorder: false

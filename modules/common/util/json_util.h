@@ -46,6 +46,13 @@ class JsonUtil {
                                 const std::string &key, std::string *value);
 
   /**
+   * @brief Get a bytes sequence from the given json[key].
+   * @return Whether the field exists and is a valid bytes sequence.
+   */
+  static bool GetBytesFromJson(const nlohmann::json &json,
+                               const std::string &key, std::string *value);
+
+  /**
    * @brief Get a number value from the given json[key].
    * @return Whether the field exists and is a valid number.
    */

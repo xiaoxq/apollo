@@ -53,6 +53,7 @@ class WebSocketHandler : public CivetWebSocketHandler {
   using Connection = struct mg_connection;
   using MessageHandler = std::function<void(const Json &, Connection *)>;
   using ConnectionReadyHandler = std::function<void(Connection *)>;
+  using ConnectionCloseHandler = std::function<void(const Connection *)>;
 
   /**
    * @brief Callback method for when the client intends to establish a websocket
@@ -135,11 +136,20 @@ class WebSocketHandler : public CivetWebSocketHandler {
     connection_ready_handlers_.emplace_back(handler);
   }
 
+  /**
+   * @brief Add a new handler for connection close.
+   * @param handler The function to handle the closing connection.
+   */
+  void RegisterConnectionCloseHandler(ConnectionCloseHandler handler) {
+    connection_close_handlers_.emplace_back(handler);
+  }
+
  private:
   // Message handlers keyed by message type.
   std::unordered_map<std::string, MessageHandler> message_handlers_;
-  // New connection ready handlers.
+  // Connection handlers.
   std::vector<ConnectionReadyHandler> connection_ready_handlers_;
+  std::vector<ConnectionCloseHandler> connection_close_handlers_;
 
   // The mutex guarding the connection set. We are not using read
   // write lock, as the server is not expected to get many clients

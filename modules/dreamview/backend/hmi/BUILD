@@ -22,11 +22,25 @@ cc_binary(
 )
 
 cc_library(
+    name = "voice_detector",
+    srcs = ["voice_detector.cc"],
+    hdrs = ["voice_detector.h"],
+    deps = [
+        "//modules/common:log",
+        "//modules/common/monitor_log",
+        "//modules/common/util:string_util",
+        "//modules/dreamview/proto:hmi_config_proto",
+        "@snowboy//:snowboy",
+    ],
+)
+
+cc_library(
     name = "hmi",
     srcs = ["hmi.cc"],
     hdrs = ["hmi.h"],
     deps = [
         ":vehicle_manager",
+        ":voice_detector",
         "//modules/common/adapters:adapter_manager",
         "//modules/common/kv_db",
         "//modules/common/monitor_log",
